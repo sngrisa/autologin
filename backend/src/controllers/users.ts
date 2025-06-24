@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import User from "../models/user.model";
+import CreateToken from "../validations/jsonwebtoken";
 
 const createUsers: RequestHandler = async (req: Request, res: Response) => {
 
@@ -52,13 +53,6 @@ const updateUsers: RequestHandler = async (req: Request, res: Response) => {
         const { iduser } = req.params;
         const { username, emailuser, password } = req.body;
 
-        if (String(username).trim().length <= 2 || String(emailuser).trim().length <= 2 || String(password).trim().length <= 2 || String(password).trim().length <= 2 && String(emailuser).trim().length <= 2 && String(username).trim().length <= 2) {
-            res.status(401).json({
-                ok: false,
-                msg: "Field has less of 3 characters !!"
-            });
-        }
-
         const bcryptSalts = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, bcryptSalts);
 
@@ -90,7 +84,7 @@ const updateUsers: RequestHandler = async (req: Request, res: Response) => {
 
 const getUsers: RequestHandler = async (req: Request, res: Response) => {
     try {
-        const users = await User.findAll();
+        const users = await User.findAll({ where: { status: true } });
         if (!users) {
             res.status(401).json({
                 ok: false,
@@ -117,10 +111,10 @@ const getUsers: RequestHandler = async (req: Request, res: Response) => {
 const getUsersByEmail: RequestHandler = async (req: Request, res: Response) => {
     try {
         const { emailuser } = req.params;
-        const user = await User.findOne({ where: { emailuser } });
+        const user = await User.findOne({ where: { emailuser, status: true } });
         if (!user) {
             res.status(401).json({
-                ok: true,
+                ok: false,
                 msg: "User not found !!!",
                 data: user
             })
@@ -205,7 +199,7 @@ const getUsersByStatus: RequestHandler = async (req: Request, res: Response) => 
 const getUsersById: RequestHandler = async (req: Request, res: Response) => {
     try {
         const { iduser } = req.params;
-        const user = await User.findOne({ where: { iduser } });
+        const user = await User.findAll({ where: { iduser } });
         if (!user) {
             res.status(401).json({
                 ok: false,
@@ -232,7 +226,7 @@ const getUsersById: RequestHandler = async (req: Request, res: Response) => {
 const getUsersByUsername: RequestHandler = async (req: Request, res: Response) => {
     try {
         const { username } = req.params;
-        const user = await User.findOne({where:{username}});
+        const user = await User.findOne({ where: { username, status: true } });
         if (!user) {
             res.status(401).json({
                 ok: false,
@@ -242,6 +236,7 @@ const getUsersByUsername: RequestHandler = async (req: Request, res: Response) =
         res.status(201).json({
             ok: true,
             msg: "User finded",
+            user: user
         })
     } catch (err: unknown) {
         const error = err as Error;
@@ -254,5 +249,48 @@ const getUsersByUsername: RequestHandler = async (req: Request, res: Response) =
     }
 }
 
+const loginUsers = async (req: Request, res: Response) => {
+    try {
+        const { emailuser, password } = req.body;
 
-export { createUsers, updateUsers, getUsers, getUsersByEmail, getUsersByStatus, getUsersById, getUsersByUsername, deconsteUsers };
+        const userValidate: User | null = await User.findOne({ where: { emailuser } });
+
+        if (!userValidate) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found with this email!!!!",
+            });
+        }
+
+        const passwordValidate: boolean = await bcrypt.compare(password, String(userValidate?.password));
+
+        if (!passwordValidate) {
+            return res.status(401).json({
+                ok: false,
+                msg: "Password Incorrect!!!!",
+            });
+        }
+
+        const token = await CreateToken(String(userValidate?.iduser), String(userValidate?.emailuser));
+
+        return res.status(200).json({
+            ok: true,
+            msg: "Welcome User to the System",
+            _id: userValidate?.iduser,
+            email: userValidate?.emailuser,
+            username: userValidate?.username,
+            token
+        });
+    } catch (err: unknown) {
+        const error = err as Error;
+        console.error('Error in login to users', err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Error to login !!!!",
+            error: error.message || err
+        });
+    }
+}
+
+
+export { createUsers, updateUsers, getUsers, getUsersByEmail, getUsersByStatus, getUsersById, getUsersByUsername, deconsteUsers, loginUsers };

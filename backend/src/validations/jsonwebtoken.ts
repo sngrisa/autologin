@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const createToken = (iduser: number | string, emailuser: string): Promise<string> => {
+const CreateToken = (iduser: number | string, emailuser: string): Promise<string> => {
     const secretJWT: string = "UsEr";
 
     const payload = {
@@ -20,4 +20,4 @@ const createToken = (iduser: number | string, emailuser: string): Promise<string
     })
 }
 
-export default createToken;
+export default CreateToken;

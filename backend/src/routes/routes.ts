@@ -5,7 +5,7 @@ const routes: Router = Router();
 
 routes.use('/users', userRoutes);
 
-routes.get('ping', (_req: Request, res: Response): void => {
+routes.get('/ping', (_req: Request, res: Response): void => {
     res.status(200).json({
         ok: true,
         msg: 'pong',

@@ -8,17 +8,17 @@ import { SiAvast } from "react-icons/si";
 import { MdAttachEmail } from "react-icons/md";
 import Sweetalert2 from "@/shared/sweetAlert/sweetalert2";
 import { useState } from "react";
+import { postUser } from "@/services/users.service";
 
 const Register = () => {
 
 
-  let [showConfirmAlert, setConfirmAlert] = useState<boolean>(false);
+  const [showConfirmAlert, setConfirmAlert] = useState<boolean>(false);
 
 
-  const submitForm = (event: any) =>{
+  const submitForm = (event: Event) =>{
     event?.preventDefault();
-    setConfirmAlert(true);
-    return (<Sweetalert2 alertDetails={showConfirmAlert}/>);
+    postUser();
   }
 
   return (
@@ -32,7 +32,7 @@ const Register = () => {
               </Link>
             </section>
             <h1 className="text-slate-900 text-center text-3xl font-semibold">Registrarse</h1>
-            <form className="mt-12 space-y-6" onSubmit={submitForm}>
+            <form className="mt-12 space-y-6" onSubmit={(event: Event) => submitForm(event)}>
               <div>
                 <Label className="text-slate-900 text-sm font-bold mb-2 block">Email</Label>
                 <div className="relative flex items-center">
